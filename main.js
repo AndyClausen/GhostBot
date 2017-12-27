@@ -17,7 +17,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 client.on('ready', () => {
-  console.log("Ready!");
+  console.log("Should be ready now.");
 });
 
 client.on('message', handler);
