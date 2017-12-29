@@ -10,7 +10,7 @@ sql.open("./controllers/userbank.sqlite").then(() => {
     }).catch(e => console.log(e));
   }).catch(e => console.log(e));
 }).catch(e => console.log(e));
-
+const usersKeys = ["username", "address", "crew"];
 
 const parseErrorMsg = `\`\`\`md
 Usage:
@@ -31,15 +31,15 @@ List of commands:
 
   add <Username> <IP> <CrewInitials (optional)>
 
-  update <Username> <NewUsername> <IP> <CrewInitials> // COMING SOON!
+  update <Username> <NewUsername> <IP> <CrewInitials>  // COMING SOON!
 
-  newname <Username> <NewUsername> // COMING SOON!
+  newname <Username> <NewUsername> # COMING SOON!
 
   changeip <Username> <IP> // COMING SOON!
 
   changecrew <Username> <CrewInitials> // COMING SOON!
 
-  remove <Username> // COMING SOON!
+  remove <Username>
 
   listcrews
 
@@ -51,15 +51,15 @@ List of commands:
 module.exports = {
   'g!': {
     'userbank': (m, args) => {
-      if(args.length == 0)
-        m.reply(parseErrorMsg);
+      if(args.length === 0)
+        args = ["list"];
 
-      else switch (args[0]) {
+      switch (args[0]) {
         case "help":
           if(args.length === 1) {
             m.reply(helpText);
-            break;
-          }
+          } else m.reply(parseErrorMsg);
+          break;
         case "list":
           if (args.length === 1) {
             sql.all("SELECT * FROM users").then(res => {
@@ -70,10 +70,9 @@ module.exports = {
                           crew: {name: "Crew Initials"}
                         }) + "```");
             });
-            break;
           } else if (args.length === 2) {
-            sql.all("SELECT * FROM users WHERE crew == ?", args[1]).then(res => {
-              if(res.length == 0)
+            sql.all("SELECT * FROM users WHERE crew=?", args[1]).then(res => {
+              if(res.length === 0)
                 m.reply("I could find that crew...");
               else
                 m.reply("All users in crew " + args[1] + ": \n```\n"
@@ -83,36 +82,50 @@ module.exports = {
                             crew: {name: "Crew Initials"}
                           }) + "```");
             }).catch(e => console.log(e));
-            break;
-          }
+          } else m.reply(parseErrorMsg);
+          break;
         case "add":
           if(args.length >= 2 && args.length <= 4) {
-            sql.run("INSERT INTO users VALUES (?"+ _.repeat(", ?", args.length-2) +")", _.drop(args)).then(() => {
+            sql.run("INSERT INTO users (" + _.take(usersKeys, args.length-1).toString() + ") VALUES (?"+ _.repeat(", ?", args.length-2) +")", _.tail(args)).then(() => {
               m.reply(`user '${args[1]}' was added to the user bank`);
             }).catch(e => {
               console.log(e);
               console.log(args);
-              console.log("INSERT INTO users VALUES (?"+ _.repeat(", ?", args.length-2) +")");
-              m.reply(parseErrorMsg);
+              if(e.errno === 19)
+                m.reply("That user has already been added!");
+              else
+                m.reply("There was an error adding that user... Please report to @Andy#7956");
             });
-            break;
-          }
+          } else m.reply(parseErrorMsg);
+          break;
+        case "remove":
+          if(args.length === 2) {
+            sql.run("DELETE FROM users WHERE username=?",args[1]).then(() => {
+              m.reply(`user '${args[1]}' was removed from the user bank`);
+            }).catch(e => {
+              console.log(e);
+              console.log(args);
+              m.reply(`Failed to remove user '${args[1]}'`);
+            });
+          } else m.reply(parseErrorMsg);
+          break;
         case "listcrews":
           if (args.length === 1) {
             sql.all("SELECT * FROM crews").then(res => {
               m.reply("All crews in bank: \n```\n" + Table.print(res, {initials: {name: "Initials"}, fullname: {name: "Full name"}}) + "```");
             });
-            break;
-          }
+          } else m.reply(parseErrorMsg);
+          break;
         case "addcrew":
-          if(args.length == 3) {
+          if(args.length === 3) {
             sql.run("INSERT INTO crews VALUES (?, ?)", _.drop(args)).then(() => {
               m.reply(`crew ${args[1]} was added to the user bank`);
             }).catch(e => {
               console.log(e);
               m.reply(parseErrorMsg);
             });
-          }
+          } else m.reply(parseErrorMsg);
+          break;
         default:
           m.reply(parseErrorMsg)
       }

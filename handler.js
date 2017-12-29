@@ -4,7 +4,8 @@ const routes = require('./routes');
 const _ = require('lodash');
 
 module.exports = m => {
-  if(routes[m.content] != null && typeof(routes[m.content]) == 'function')
+  m.content = m.content.trim();
+  if(routes[m.content] !== null && typeof(routes[m.content]) === 'function')
     return routes[m.content](m);
 
   for (let r in routes) {
