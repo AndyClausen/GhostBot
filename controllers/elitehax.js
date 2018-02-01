@@ -62,6 +62,21 @@ module.exports = {
           } else m.reply(parseErrorMsg);
           break;
 
+        case "find":
+          if(args.length === 2)
+            sql.all(`SELECT * FROM users WHERE username LIKE '%${args[1]}%'`).then(res => {
+              if(res.length === 0)
+                m.reply("No users found!");
+              else
+                m.reply("I found these users for you: \n```\n"
+                  + Table.print(res, {
+                    username: {name: "Username"},
+                    address: {name: "IP"},
+                    crew: {name: "Crew Initials"}
+                  }) + "```");
+            }).catch(console.log);
+          break;
+
         case "list":
           if (args.length === 1) {
             sql.all("SELECT * FROM users").then(res => {
