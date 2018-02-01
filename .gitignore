@@ -61,3 +61,4 @@ typings/
 # Other shit...
 config.json
 .idea/
+nohup.out
