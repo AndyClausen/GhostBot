@@ -31,13 +31,13 @@ List of commands:
 
   add <Username> <IP> <CrewInitials (optional)>
 
-  update <Username> <NewUsername> <IP> <CrewInitials>  // COMING SOON!
+  update <Username> <NewUsername> <IP> <CrewInitials>
 
-  newname <Username> <NewUsername> # COMING SOON!
+  changename <Username> <NewUsername>
 
-  changeip <Username> <IP> // COMING SOON!
+  changeip <Username> <IP>
 
-  changecrew <Username> <CrewInitials> // COMING SOON!
+  changecrew <Username> <CrewInitials>
 
   remove <Username>
 
@@ -45,7 +45,7 @@ List of commands:
 
   addcrew <CrewInitials> <CrewFullname>
 
-  removecrew <CrewInitials> // COMING SOON!
+  removecrew <CrewInitials>
 \`\`\``;
 
 module.exports = {
@@ -55,11 +55,13 @@ module.exports = {
         args = ["list"];
 
       switch (args[0]) {
+
         case "help":
           if(args.length === 1) {
             m.reply(helpText);
           } else m.reply(parseErrorMsg);
           break;
+
         case "list":
           if (args.length === 1) {
             sql.all("SELECT * FROM users").then(res => {
@@ -84,6 +86,7 @@ module.exports = {
             }).catch(e => console.log(e));
           } else m.reply(parseErrorMsg);
           break;
+
         case "add":
           if(args.length >= 2 && args.length <= 4) {
             sql.run("INSERT INTO users (" + _.take(usersKeys, args.length-1).toString() + ") VALUES (?"+ _.repeat(", ?", args.length-2) +")", _.tail(args)).then(() => {
@@ -98,9 +101,66 @@ module.exports = {
             });
           } else m.reply(parseErrorMsg);
           break;
+
+        case "update":
+          if(args.length === 5) {
+            sql.all("SELECT * FROM users WHERE username=?", args[1]).then(res => {
+              args.push(args[1]);
+              if(res.length === 0)
+                m.reply("I could find that username... Check your spelling and watch out for capital letters!");
+              else
+                sql.run("UPDATE users SET username=?, address=?, crew=? where username=?", _.drop(args, 2)).then(() => {
+                  m.reply(`User ${args[1]} has been updated`);
+                }).catch(e => {console.log(e); m.reply("An error occurred... Contact Andy!")});
+            }).catch(e => console.log(e));
+          } else m.reply(parseErrorMsg);
+          break;
+
+        case "changename":
+          if(args.length === 3) {
+            sql.all("SELECT * FROM users WHERE username=?", args[1]).then(res => {
+              args.push(args[1]);
+              if(res.length === 0)
+                m.reply("I could find that username... Check your spelling and watch out for capital letters!");
+              else
+                sql.run("UPDATE users SET username=? where username=?", [args[2], args[1]]).then(() => {
+                  m.reply(`User ${args[1]} has been updated`);
+                }).catch(e => {console.log(e); m.reply("An error occurred... Contact Andy!")});
+            }).catch(e => console.log(e));
+          } else m.reply(parseErrorMsg);
+          break;
+
+        case "changeip":
+          if(args.length === 3) {
+            sql.all("SELECT * FROM users WHERE username=?", args[1]).then(res => {
+              args.push(args[1]);
+              if(res.length === 0)
+                m.reply("I could find that username... Check your spelling and watch out for capital letters!");
+              else
+                sql.run("UPDATE users SET address=? where username=?", [args[2], args[1]]).then(() => {
+                  m.reply(`User ${args[1]} has been updated`);
+                }).catch(e => {console.log(e); m.reply("An error occurred... Contact Andy!")});
+            }).catch(e => console.log(e));
+          } else m.reply(parseErrorMsg);
+          break;
+
+        case "changecrew":
+          if(args.length === 3) {
+            sql.all("SELECT * FROM users WHERE username=?", args[1]).then(res => {
+              args.push(args[1]);
+              if(res.length === 0)
+                m.reply("I could find that username... Check your spelling and watch out for capital letters!");
+              else
+                sql.run("UPDATE users SET crew=? where username=?", [args[2], args[1]]).then(() => {
+                  m.reply(`User ${args[1]} has been updated`);
+                }).catch(e => {console.log(e); m.reply("An error occurred... Contact Andy!")});
+            }).catch(e => console.log(e));
+          } else m.reply(parseErrorMsg);
+          break;
+
         case "remove":
           if(args.length === 2) {
-            sql.run("DELETE FROM users WHERE username=?",args[1]).then(() => {
+            sql.run("DELETE FROM users WHERE username=?", args[1]).then(() => {
               m.reply(`user '${args[1]}' was removed from the user bank`);
             }).catch(e => {
               console.log(e);
@@ -109,6 +169,7 @@ module.exports = {
             });
           } else m.reply(parseErrorMsg);
           break;
+
         case "listcrews":
           if (args.length === 1) {
             sql.all("SELECT * FROM crews").then(res => {
@@ -116,6 +177,7 @@ module.exports = {
             });
           } else m.reply(parseErrorMsg);
           break;
+
         case "addcrew":
           if(args.length === 3) {
             sql.run("INSERT INTO crews VALUES (?, ?)", _.drop(args)).then(() => {
@@ -126,8 +188,22 @@ module.exports = {
             });
           } else m.reply(parseErrorMsg);
           break;
+
+        case "removecrew":
+          if(args.length === 2) {
+            sql.run("DELETE FROM crews WHERE initials=?", args[1]).then(() => {
+              m.reply(`Crew '${args[1]}' was removed from the user bank`);
+            }).catch(e => {
+              console.log(e);
+              console.log(args);
+              m.reply(`Failed to remove crew '${args[1]}'`);
+            });
+          } else m.reply(parseErrorMsg);
+          break;
+
         default:
           m.reply(parseErrorMsg)
+
       }
     }
   }
